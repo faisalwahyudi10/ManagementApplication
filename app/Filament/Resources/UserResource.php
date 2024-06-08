@@ -129,6 +129,12 @@ class UserResource extends Resource
                             ->limitList(3)
                             ->separator(',')
                     ]),
+                    Tables\Columns\Layout\Stack::make([
+                        Tables\Columns\TextColumn::make('is_active')
+                            ->badge()
+                            ->color(fn (User $record) => $record->is_active ? 'success' : 'danger')
+                            ->getStateUsing(fn (User $record) => $record->is_active ? 'Active' : 'Inactive')
+                    ]),
                 ])->from('md'),
             ])
             ->filters([
@@ -139,16 +145,25 @@ class UserResource extends Resource
                     Tables\Actions\EditAction::make()
                         ->using(fn (User $record, array $data) => $record->update($data)),
                     Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\Action::make('activation')
+                        ->successNotificationTitle('Saved!')
+                        ->requiresConfirmation()
+                        ->label(fn (User $record) => $record->is_active ? 'Disable' : 'Enable')
+                        ->icon(fn (User $record) => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
+                        ->color(fn (User $record) => $record->is_active ? 'gray' : 'success')
+                        ->action(function (User $record, Tables\Actions\Action $action) {
+                            $record->update([
+                                'is_active' => ! $record->is_active,
+                            ]);
+
+                            $action->sendSuccessNotification();
+                        }),
                     Impersonate::make()
                         ->grouped()
                         ->label(fn (User $record) => "Login sebagai {$record->name}")
                         ->icon('heroicon-m-eye')
-                        ->color('success')
+                        ->color('primary')
                 ])
-                    ->label('Aksi')
-                    ->button()
-                    ->outlined()
-                    ->icon('heroicon-s-cog')
             ])
             ->bulkActions([
                 //

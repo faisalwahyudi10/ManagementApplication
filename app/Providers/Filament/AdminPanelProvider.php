@@ -40,6 +40,16 @@ class AdminPanelProvider extends PanelProvider
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
             ])
+            ->plugins([
+                \BezhanSalleh\FilamentExceptions\FilamentExceptionsPlugin::make()
+            ])
+            ->resources([
+                config('filament-logger.activity_resource')
+            ])
+            ->navigationGroups([
+                'Management Users',
+                'Developer Tools',
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

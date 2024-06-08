@@ -164,10 +164,6 @@ class UserResource extends Resource
                         ->icon('heroicon-m-eye')
                         ->color('primary')
                 ])
-                    ->label('Aksi')
-                    ->button()
-                    ->outlined()
-                    ->icon('heroicon-s-cog')
             ])
             ->bulkActions([
                 //

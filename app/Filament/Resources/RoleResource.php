@@ -88,13 +88,6 @@ class RoleResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
-                Tables\Actions\Action::make('persistRolePermissions')
-                    ->requiresConfirmation()
-                    ->icon('heroicon-o-shield-check')
-                    ->label('Persist Permissions')
-                    // ->hidden(fn(Role $record) => !in_array($record->name, UserRole::values()) || app()->isProduction())
-                    ->action(fn(Role $record) => throw new \Exception('Not implemented.'))
-                    ->successNotificationTitle('Permissions persisted successfully.')
             ])
             ->bulkActions([
                 //

@@ -13,7 +13,6 @@ use Filament\Tables\Table;
 use STS\FilamentImpersonate\Tables\Actions\Impersonate;
 use Illuminate\Support\Str;
 use Filament\Forms\Components;
-use Spatie\Permission\Models\Role;
 
 class UserResource extends Resource
 {
@@ -89,6 +88,7 @@ class UserResource extends Resource
     {
         return $table
             ->query(fn () => User::query())
+            ->recordAction('view')
             ->columns([
                 Tables\Columns\Layout\Split::make([
                     Tables\Columns\SpatieMediaLibraryImageColumn::make('avatar')
@@ -123,6 +123,12 @@ class UserResource extends Resource
                             ->sortable()
                             ->icon('heroicon-m-envelope'),
                     ]),
+                    Tables\Columns\Layout\Stack::make([
+                        Tables\Columns\TextColumn::make('roles.name')
+                            ->badge()
+                            ->limitList(3)
+                            ->separator(',')
+                    ]),
                 ])->from('md'),
             ])
             ->filters([
@@ -130,7 +136,8 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\EditAction::make()
+                        ->using(fn (User $record, array $data) => $record->update($data)),
                     Tables\Actions\DeleteAction::make(),
                     Impersonate::make()
                         ->grouped()

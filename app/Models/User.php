@@ -25,6 +25,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia
     protected $fillable = [
         'name',
         'email',
+        'is_active',
         'password',
     ];
 
@@ -48,6 +49,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 

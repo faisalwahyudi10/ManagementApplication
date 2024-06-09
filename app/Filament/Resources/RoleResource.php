@@ -81,11 +81,19 @@ class RoleResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
             ])
+            ->recordAction('view_role')
+            ->recordUrl(null)
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
+                Tables\Actions\Action::make('view_role')
+                    ->label('View')
+                    ->icon('heroicon-o-eye')
+                    ->color('secondary')
+                    ->modalHeading('View Role')
+                    ->modalContent(fn (Role $record) => view('filament.modals.view-roles', compact('record')))
+                    ->modalSubmitAction(false),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

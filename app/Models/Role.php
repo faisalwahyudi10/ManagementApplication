@@ -8,4 +8,6 @@ use Spatie\Permission\Models\Role as Model;
 class Role extends Model
 {
     use HasFactory;
+
+    protected $fillable = ['name', 'guard_name'];
 }

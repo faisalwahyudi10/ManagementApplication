@@ -39,7 +39,7 @@ class UserResource extends Resource
                                     ->alignCenter()
                                     ->columnSpanFull()
                                     ->preserveFilenames(),
-                                Components\TextInput::make('name')
+                                Components\TextInput::make('nameeeee')
                                     ->required()
                                     ->placeholder('Enter name'),
                                 Components\TextInput::make('email')

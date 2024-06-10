@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Spatie\Activitylog\Models\Activity;
 
 class ActivityPolicy
 {
@@ -17,7 +18,11 @@ class ActivityPolicy
      */
     public function viewAny(User $user)
     {
-        return true;
+        if ($user->can('Activity:viewAny')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -27,9 +32,13 @@ class ActivityPolicy
      * @param  \App\Models\User  $model
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function view(User $user)
+    public function view(User $user, Activity $activity)
     {
-        return true;
+        if ($user->can('Activity:view')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -40,7 +49,7 @@ class ActivityPolicy
      */
     public function create(User $user)
     {
-        return true;
+        return false;
     }
 
     /**
@@ -50,9 +59,9 @@ class ActivityPolicy
      * @param  \App\Models\User  $model
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function update(User $user)
+    public function update(User $user, Activity $activity)
     {
-        return true;
+        return false;
     }
 
     /**
@@ -62,9 +71,9 @@ class ActivityPolicy
      * @param  \App\Models\User  $model
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function delete(User $user)
+    public function delete(User $user, Activity $activity)
     {
-        return true;
+        return false;
     }
 
     /**
@@ -74,9 +83,9 @@ class ActivityPolicy
      * @param  \App\Models\User  $model
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function restore(User $user)
+    public function restore(User $user, Activity $activity)
     {
-        return true;
+        return false;
     }
 
     /**
@@ -86,8 +95,8 @@ class ActivityPolicy
      * @param  \App\Models\User  $model
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function forceDelete(User $user)
+    public function forceDelete(User $user, Activity $activity)
     {
-        return true;
+        return false;
     }
 }

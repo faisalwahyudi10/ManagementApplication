@@ -16,9 +16,13 @@ class ExceptionPolicy
      * @param  \App\Models\User  $user
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function viewAny(User $user)
+    public function viewAny(User $user, Exception $exception)
     {
-        return true;
+        if ($user->can('Exception:viewAny')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -30,7 +34,11 @@ class ExceptionPolicy
      */
     public function view(User $user, Exception $exception)
     {
-        return true;
+        if ($user->can('Exception:view')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -41,7 +49,7 @@ class ExceptionPolicy
      */
     public function create(User $user)
     {
-        return true;
+        return false;
     }
 
     /**
@@ -53,7 +61,7 @@ class ExceptionPolicy
      */
     public function update(User $user, Exception $exception)
     {
-        return true;
+        return false;
     }
 
     /**
@@ -65,7 +73,7 @@ class ExceptionPolicy
      */
     public function delete(User $user, Exception $exception)
     {
-        return true;
+        return false;
     }
 
     /**
@@ -89,6 +97,6 @@ class ExceptionPolicy
      */
     public function forceDelete(User $user, Exception $exception)
     {
-        return true;
+        return false;
     }
 }

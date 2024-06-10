@@ -16,7 +16,7 @@ class ExceptionPolicy
      * @param  \App\Models\User  $user
      * @return \Illuminate\Auth\Access\Response|bool
      */
-    public function viewAny(User $user, Exception $exception)
+    public function viewAny(User $user)
     {
         if ($user->can('Exception:viewAny')) {
             return true;

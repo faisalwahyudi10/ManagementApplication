@@ -3,6 +3,11 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Policies\ActivityPolicy;
+use App\Policies\ExceptionPolicy;
+use BezhanSalleh\FilamentExceptions\Models\Exception;
+use Illuminate\Support\Facades\Gate;
+use Spatie\Activitylog\Models\Activity;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Gate::policy(Activity::class, ActivityPolicy::class);
+        Gate::policy(Exception::class, ExceptionPolicy::class);
     }
 }

@@ -11,6 +11,7 @@
         "filament/spatie-laravel-media-library-plugin": "^3.2",
         "laravel/framework": "^11.9",
         "laravel/tinker": "^2.9",
+        "marvinlabs/laravel-discord-logger": "^1.4",
         "spatie/laravel-activitylog": "^4.8",
         "spatie/laravel-permission": "^6.7",
         "stechstudio/filament-impersonate": "^3.9",

@@ -88,7 +88,6 @@ class UserResource extends Resource
     {
         return $table
             ->query(fn () => User::query())
-            ->recordAction('view')
             ->columns([
                 Tables\Columns\Layout\Split::make([
                     Tables\Columns\SpatieMediaLibraryImageColumn::make('avatar')
@@ -145,18 +144,29 @@ class UserResource extends Resource
                     Tables\Actions\EditAction::make()
                         ->using(fn (User $record, array $data) => $record->update($data)),
                     Tables\Actions\DeleteAction::make(),
-                    Tables\Actions\Action::make('activation')
-                        ->successNotificationTitle('Saved!')
+                    Tables\Actions\Action::make('enable')
+                        ->visible(fn (User $record) => auth()->user()->can('enable', $record))
+                        ->label('Enable User')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
                         ->requiresConfirmation()
-                        ->label(fn (User $record) => $record->is_active ? 'Disable' : 'Enable')
-                        ->icon(fn (User $record) => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
-                        ->color(fn (User $record) => $record->is_active ? 'gray' : 'success')
-                        ->action(function (User $record, Tables\Actions\Action $action) {
+                        ->modalHeading(fn (User $record) => "Enable User : {$record->name}")
+                        ->action(function (User $record) {
                             $record->update([
-                                'is_active' => ! $record->is_active,
+                                'is_active' => true,
                             ]);
-
-                            $action->sendSuccessNotification();
+                        }),
+                    Tables\Actions\Action::make('disable')
+                        ->visible(fn (User $record) => auth()->user()->can('disable', $record))
+                        ->label('Disable')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading(fn (User $record) => "Disable User : {$record->name}")
+                        ->action(function (array $data, User $record) {
+                            $record->update([
+                                'is_active' => false,
+                            ]);
                         }),
                     Impersonate::make()
                         ->grouped()

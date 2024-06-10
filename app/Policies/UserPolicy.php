@@ -99,4 +99,38 @@ class UserPolicy
             return true;
         }
     }
+
+    public function disable(User $user, User $model)
+    {
+        if ($model->is_active === false) {
+            return false;
+        }
+
+        if ($user->is($model)) {
+            return false;
+        }
+
+        if ($model->hasAnyRole([UserRole::SuperAdmin->value])) {
+            return false;
+        }
+
+        if ($user->can('User:disable')) {
+            return true;
+        }
+    }
+
+    public function enable(User $user, User $model)
+    {
+        if ($model->is_active === true) {
+            return false;
+        }
+
+        if ($user->is($model)) {
+            return false;
+        }
+
+        if ($user->can('User:enable')) {
+            return true;
+        }
+    }
 }

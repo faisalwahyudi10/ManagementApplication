@@ -18,7 +18,6 @@ enum MenuType: string implements HasLabel
         return $this->name;
     }
 
-    //to array 
     public static function toArray(): array
     {
         return [

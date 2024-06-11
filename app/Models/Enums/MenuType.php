@@ -28,7 +28,6 @@ enum MenuType: string implements HasLabel
         ];
     }
 
-    // icon to array
     public static function toIconArray(): array
     {
         return [
@@ -37,5 +36,4 @@ enum MenuType: string implements HasLabel
             self::Custom->value => 'heroicon-o-link',
         ];
     }
-    
 }

@@ -15,11 +15,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('parent_id')->nullable()->constrained('menus')->nullOnDelete();
             $table->string('name');
-            $table->string('slug')->unique();
+            $table->string('type');
+            $table->string('slug')->nullable()->unique();
             $table->string('icon')->nullable();
             $table->string('route')->nullable();
             $table->integer('order')->default(0);
             $table->boolean('is_show')->default(true);
+            $table->boolean('is_custom')->default(false);
             $table->timestamps();
         });
     }

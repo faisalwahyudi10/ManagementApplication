@@ -4,7 +4,6 @@ namespace App\Filament\Pages;
 
 use Filament\Actions;
 use Filament\Forms;
-use Illuminate\Support\Str;
 use Saade\FilamentAdjacencyList\Forms as AdjacencyListForms;
 
 class MenuPage extends \Filament\Pages\Page
@@ -19,7 +18,11 @@ class MenuPage extends \Filament\Pages\Page
 
     public function mount()
     {
-        $menus = \App\Models\Menu::query()->with('children')->whereParentId(null)->get();
+        $menus = \App\Models\Menu::query()->with(['children' => function ($query) {
+            $query->orderBy('order');
+        }])
+        ->whereParentId(null)
+        ->orderBy('order')->get();
 
         $this->menuListData = ['menus' => static::buildMenuArray($menus)];
     }
@@ -28,7 +31,8 @@ class MenuPage extends \Filament\Pages\Page
     {
         return array_map(function ($menu) {
             return [
-                'label' => $menu->name,
+                ...$menu->toArray(),
+                'label' => $menu->name.($menu->is_show ? "" : " <span class='text-gray-400 text-sm'>(Hidden)</span>"),
                 'children' => static::buildMenuArray($menu->children) ?? [],
             ];
         }, $menus->all());
@@ -72,7 +76,7 @@ class MenuPage extends \Filament\Pages\Page
                 ->columnSpanFull()
                 ->columns(6)
                 ->schema([
-                    Forms\Components\Select::make('filament_resource')
+                    Forms\Components\Select::make('instance')
                         ->columnSpan(3)
                         ->label('Resource/Page')
                         ->searchable()
@@ -90,15 +94,13 @@ class MenuPage extends \Filament\Pages\Page
                             }, []);
                         })
                         ->disableOptionWhen(function (string $value) {
-                            $slug = $value::getSlug();
-                            return \App\Models\Menu::where('slug', $slug)->exists();
+                            return \App\Models\Menu::where('instance', $value)->exists();
                         })
                         ->live()
                         ->afterStateUpdated(function ($state, Forms\Set $set) {
                             if (! $state) return;
 
                             $set('name', $state::getNavigationLabel());
-                            $set('slug', $state::getSlug());
                             $set('route', method_exists($state, 'getRouteBaseName') ? $state::getRouteBaseName() : $state::getNavigationItemActiveRoutePattern());
                             $set('icon', $state::getNavigationIcon() ?? 'heroicon-o-rectangle-stack');
                         })
@@ -117,12 +119,6 @@ class MenuPage extends \Filament\Pages\Page
                         ->columnSpan(3)
                         ->label('Name')
                         ->placeholder('Enter the name of the menu item')
-                        ->required(),
-                    Forms\Components\TextInput::make('slug')
-                        ->columnSpan(3)
-                        ->label('Slug')
-                        ->placeholder('Enter the slug of the menu item')
-                        ->visible(fn (Forms\Get $get) => $get('type') == \App\Models\Enums\MenuType::Resources->value)
                         ->required(),
                     Forms\Components\TextInput::make('icon')
                         ->columnSpan(3)
@@ -166,64 +162,24 @@ class MenuPage extends \Filament\Pages\Page
                     ->hiddenLabel()
                     ->maxDepth(1)
                     ->collapsible()
+                    ->labelKey('label')
+                    ->form([
+                        ...static::getMenuForm(),
+                    ])
                     ->addAction(function (AdjacencyListForms\Components\Actions\AddAction $action) {
                         $action
                             ->size('md')
                             ->icon('heroicon-o-plus')
+                            ->label('Add Menu')
+                            ->outlined()
                             ->color('primary')
                             ->extraAttributes([
                                 'class' => 'mx-auto mt-1'
-                            ])
-                            ->action(function (AdjacencyListForms\Components\Component $component, array $data): void {
-                                $items = $component->getState();
-                
-                                $items[(string) Str::uuid()] = [
-                                    $component->getLabelKey() => __('filament-adjacency-list::adjacency-list.items.untitled'),
-                                    $component->getChildrenKey() => [],
-                                    ...$data,
-                                ];
-                
-                                $component->state($items);
-                            });
+                            ]);
                     })
-                    ->addChildAction(function (AdjacencyListForms\Components\Actions\AddChildAction $action) {
-                        $action
-                            ->action(function (AdjacencyListForms\Components\Component $component, array $arguments) use ($action) : void {
-                                $parentRecord = $component->getRelatedModel() ? $component->getCachedExistingRecords()->get($arguments['cachedRecordKey']) : null;
-                    
-                                $action->process(function (AdjacencyListForms\Components\Component $component, array $arguments, array $data): void {
-                                    $statePath = $component->getRelativeStatePath($arguments['statePath']);
-                                    $uuid = (string) Str::uuid();
-                    
-                                    $items = $component->getState();
-                    
-                                    data_set($items, ("$statePath." . $component->getChildrenKey() . ".$uuid"), [
-                                        $component->getLabelKey() => __('filament-adjacency-list::adjacency-list.items.untitled'),
-                                        $component->getChildrenKey() => [],
-                                        ...$data,
-                                    ]);
-                    
-                                    $component->state($items);
-                                }, ['parentRecord' => $parentRecord]);
-                            });
-                    })
-                    ->editAction(function (AdjacencyListForms\Components\Actions\EditAction $action) {
-                        $action
-                            ->action(function (AdjacencyListForms\Components\Component $component, array $arguments): void {
-                                $record = $component->getRelatedModel() ? $component->getCachedExistingRecords()->get($arguments['cachedRecordKey']) : null;
-                    
-                                $this->process(function (AdjacencyListForms\Components\Component $component, array $arguments, array $data): void {
-                                    $statePath = $component->getRelativeStatePath($arguments['statePath']);
-                                    $state = $component->getState();
-                    
-                                    $item = array_merge(data_get($state, $statePath), $data);
-                    
-                                    data_set($state, $statePath, $item);
-                    
-                                    $component->state($state);
-                                }, ['record' => $record]);
-                            });
-                    })
+                    ->deleteAction(function (AdjacencyListForms\Components\Actions\DeleteAction $action) {
+                        $action->requiresConfirmation();
+                    }),
             ])
             ->model(\App\Models\Menu::class)
             ->statePath('menuListData');

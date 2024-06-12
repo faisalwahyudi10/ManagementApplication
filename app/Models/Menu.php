@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Enums\MenuType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -37,8 +38,12 @@ class Menu extends Model
         return $this->hasMany(Menu::class, 'parent_id');
     }
 
-    public function scopeType($query, $type)
+    public function scopeType($query, array|string|MenuType $type)
     {
-        return $query->where('type', $type);
+       if (is_array($type)) {
+           return $query->whereIn('type', $type);
+       } else {
+           return $query->where('type', $type);
+       }
     }
 }

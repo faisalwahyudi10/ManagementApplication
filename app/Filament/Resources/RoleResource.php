@@ -3,12 +3,14 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\RoleResource\Pages;
+use App\Models\Menu;
 use App\Models\Role;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Forms\Components;
+use Illuminate\Contracts\Support\Htmlable;
 use Spatie\Permission;
 use Illuminate\Support\Str;
 
@@ -16,11 +18,12 @@ class RoleResource extends Resource
 {
     protected static ?string $model = Role::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+    public static function getNavigationIcon(): string | Htmlable | null
+    {
+        return Menu::whereInstance(static::class)->first()?->icon ?? 'heroicon-o-shield-check';
+    }
 
     protected static ?string $navigationGroup = 'Management Users';
-
-    protected static ?int $navigationSort = 2;
 
     public static function form(Forms\Form $form): Forms\Form
     {

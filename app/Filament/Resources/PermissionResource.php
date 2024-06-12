@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PermissionResource\Pages;
+use App\Models\Menu;
 use App\Models\Permission;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -10,16 +11,18 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use Filament\Forms\Components;
+use Illuminate\Contracts\Support\Htmlable;
 
 class PermissionResource extends Resource
 {
     protected static ?string $model = Permission::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-lock-closed';
+    public static function getNavigationIcon(): string | Htmlable | null
+    {
+        return Menu::whereInstance(static::class)->first()?->icon ?? 'heroicon-o-lock-closed';
+    }
 
     protected static ?string $navigationGroup = 'Management Users';
-
-    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {

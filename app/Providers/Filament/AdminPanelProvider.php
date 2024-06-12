@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Dashboard;
 use App\Models\Enums\MenuType;
 use App\Models\Menu;
 use Filament\Http\Middleware\Authenticate;
@@ -10,7 +11,6 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationBuilder;
 use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -39,18 +39,12 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
-            ])
-            ->plugins([
-                \BezhanSalleh\FilamentExceptions\FilamentExceptionsPlugin::make()
-            ])
-            ->resources([
-                config('filament-logger.activity_resource')
             ])
             ->navigation(static::getNavigations())          
             ->middleware([
@@ -74,41 +68,39 @@ class AdminPanelProvider extends PanelProvider
         return function (NavigationBuilder $builder): NavigationBuilder {
 
             $user = Auth::user();
-            $menuGroups = Menu::query()
+            $menuItems = Menu::query()
                 ->with(['children' => function ($query) {
                     $query->orderBy('order');
                 }])
-                ->type(MenuType::Group)
-                ->whereIsShow(true)
-                ->whereParentId(null)
-                ->orderBy('order');
-
-            $menuItems = Menu::query()
                 ->whereParentId(null)
                 ->whereIsShow(true)
-                ->type([MenuType::Custom, MenuType::Resources])
-                ->orderBy('order');
+                ->orderBy('order')
+                ->get();
 
             $listGroups = [];
             $listItems = [];
 
-            foreach ($menuGroups->get() as $menu) {
-                $listGroups[] = NavigationGroup::make()
-                    ->label($menu->name)
-                    ->items(static::getNavigationGroupItems($menu->children))
-                    ->when($menu->icon, fn ($group) => $group->icon($menu->icon));
-            }
-
-            foreach ($menuItems->get() as $item) {
-                $listItems[] = NavigationItem::make()
-                    ->label($item->name)
-                    ->icon($item->icon)
-                    ->url(route($item->route));
+            foreach ($menuItems as $menu) {
+                if ($menu->type === MenuType::Group) {
+                    $listGroups[] = NavigationGroup::make()
+                        ->label($menu->name)
+                        ->items(static::getNavigationGroupItems($menu->children))
+                        ->when($menu->icon, fn ($group) => $group->icon($menu->icon));
+                } else {
+                    $listGroups[] = NavigationGroup::make()
+                        ->items([
+                            NavigationItem::make()
+                            ->label($menu->name)
+                            ->icon($menu->icon)
+                            ->url(route($menu->route))
+                        ]);
+                }
             }
 
             return $builder
                 ->groups($listGroups)
-                ->items($listItems);
+                // ->items($listItems)
+                ;
         };
     }
 
@@ -118,10 +110,8 @@ class AdminPanelProvider extends PanelProvider
 
         foreach ($menu as $child) {
             $instance = $child->instance;
-            if ($child->type == MenuType::Resources)
-            {
+            if ($child->type == MenuType::Resources) {
                 $listItem = array_merge($listItem, $instance::getNavigationItems());
-                
             } else {
                 $listItem[] = NavigationItem::make()
                     ->label($child->name)

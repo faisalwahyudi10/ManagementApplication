@@ -1,6 +1,9 @@
 <x-filament-panels::page>
     <x-filament-panels::form wire:submit="createMenu">
-        <x-filament::section heading="List Menu" description="Ini merupakan list meni yang ada diaplikasi">
+        <x-filament::section heading="List Menu" description="Ini merupakan list menu yang ada diaplikasi">
+            {{-- @if($isUpdated)
+                <div>Hahahaha</div>
+            @endif --}}
             {{ $this->menuListForm }}
         </x-filament::section>
         <div class="flex justify-end mb-5">

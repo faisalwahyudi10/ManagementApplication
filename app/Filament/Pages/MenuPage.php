@@ -14,6 +14,8 @@ class MenuPage extends \Filament\Pages\Page
 
     protected static ?string $title = 'Menu';
 
+    public bool $isUpdated = false;
+
     public ?array $menuListData = [];
 
     public function mount()
@@ -29,29 +31,33 @@ class MenuPage extends \Filament\Pages\Page
 
     private static function buildMenuArray($menus)
     {
-        return array_map(function ($menu) {
-            return [
+        $listMenu = [];
+
+        foreach ($menus as $menu) {
+            $listMenu[] = [
                 ...$menu->toArray(),
                 'label' => $menu->name.($menu->is_show ? "" : " <span class='text-gray-400 text-sm'>(Hidden)</span>"),
                 'children' => static::buildMenuArray($menu->children) ?? [],
             ];
-        }, $menus->all());
+        }
+
+        return $listMenu;
     }
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            Actions\CreateAction::make()
-                ->label('New Menu')
-                ->modalHeading('Create Menu')
-                ->form(static::getMenuForm())
-                ->successNotificationTitle('Menu Created')
-                ->failureNotificationTitle('There was a problem creating the menu.')
-                ->using(function (array $data) {
-                    static::createMenu($data);
-                }),
-        ];
-    }
+    // protected function getHeaderActions(): array
+    // {
+    //     return [
+    //         Actions\CreateAction::make()
+    //             ->label('New Menu')
+    //             ->modalHeading('Create Menu')
+    //             ->form(static::getMenuForm())
+    //             ->successNotificationTitle('Menu Created')
+    //             ->failureNotificationTitle('There was a problem creating the menu.')
+    //             ->using(function (array $data) {
+    //                 static::createMenu($data);
+    //             }),
+    //     ];
+    // }
 
     public static function createMenu(array $data)
     {
@@ -66,7 +72,9 @@ class MenuPage extends \Filament\Pages\Page
             Forms\Components\ToggleButtons::make('type')
                 ->columnSpan(2)
                 ->hiddenLabel()
-                ->options(\App\Models\Enums\MenuType::toArray())
+                ->options(function ($context) {
+                    return \App\Models\Enums\MenuType::toArray();
+                })
                 ->icons(\App\Models\Enums\MenuType::toIconArray())
                 ->default(\App\Models\Enums\MenuType::Group->value)
                 ->live()
@@ -158,11 +166,12 @@ class MenuPage extends \Filament\Pages\Page
     {
         return $form
             ->schema([
-                AdjacencyListForms\Components\AdjacencyList::make('menus')
+                \App\Forms\Components\AdjacencyList::make('menus')
                     ->hiddenLabel()
                     ->maxDepth(1)
                     ->collapsible()
-                    ->labelKey('label')
+                    ->moveable(false)
+                    ->orderColumn('order')
                     ->form([
                         ...static::getMenuForm(),
                     ])
@@ -177,9 +186,23 @@ class MenuPage extends \Filament\Pages\Page
                                 'class' => 'mx-auto mt-1'
                             ]);
                     })
+                    ->addChildAction(function (AdjacencyListForms\Components\Actions\AddChildAction $action) {
+                        $action
+                            ->visible(function (AdjacencyListForms\Components\Component $component, array $arguments) {
+                                $statePath = $component->getRelativeStatePath($arguments['statePath']);
+                                $state = $component->getState();
+
+                                $item = data_get($state, $statePath);
+                                
+                                return $item['type'] == \App\Models\Enums\MenuType::Group->value;
+                            });
+                    })
                     ->deleteAction(function (AdjacencyListForms\Components\Actions\DeleteAction $action) {
                         $action->requiresConfirmation();
-                    }),
+                    })
+                    ->afterStateUpdated(function ($state) {
+                        $this->isUpdated = true;
+                    })
             ])
             ->model(\App\Models\Menu::class)
             ->statePath('menuListData');

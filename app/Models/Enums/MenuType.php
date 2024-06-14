@@ -18,21 +18,29 @@ enum MenuType: string implements HasLabel
         return $this->name;
     }
 
-    public static function toArray(): array
+    public static function toArray(array $except = []): array
     {
-        return [
-            self::Group->value => 'Group',
-            self::Resources->value => 'Filament Resource',
-            self::Custom->value => 'Custom Link',
+        $options = [
+            self::Group->value => self::Group->getLabel(),
+            self::Resources->value => self::Resources->getLabel(),
+            self::Custom->value => self::Custom->getLabel(),
         ];
+
+        return collect($options)
+            ->except($except)
+            ->toArray();
     }
 
-    public static function toIconArray(): array
+    public static function toIconArray(array $except = []): array
     {
-        return [
+        $icons = [
             self::Group->value => 'heroicon-s-queue-list',
             self::Resources->value => 'heroicon-o-globe-alt',
             self::Custom->value => 'heroicon-o-link',
         ];
+
+        return collect($icons)
+            ->except($except)
+            ->toArray(); 
     }
 }

@@ -70,7 +70,8 @@ class AdminPanelProvider extends PanelProvider
             $user = Auth::user();
             $menuItems = Menu::query()
                 ->with(['children' => function ($query) {
-                    $query->orderBy('order');
+                    $query->orderBy('order')
+                        ->whereIsShow(true);
                 }])
                 ->whereParentId(null)
                 ->whereIsShow(true)

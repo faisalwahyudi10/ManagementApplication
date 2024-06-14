@@ -3,6 +3,11 @@
 namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use App\Policies\ActivityPolicy;
+use App\Policies\ExceptionPolicy;
+use BezhanSalleh\FilamentExceptions\Models\Exception;
+use Illuminate\Support\Facades\Gate;
+use Spatie\Activitylog\Models\Activity;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -22,6 +27,11 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        Gate::after(function ($user, $ability) {
+            return $user->hasRole('Super Admin') ? true : false;
+        });
+
+        Gate::policy(Activity::class, ActivityPolicy::class);
+        Gate::policy(Exception::class, ExceptionPolicy::class);
     }
 }

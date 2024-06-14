@@ -78,17 +78,16 @@ class AdminPanelProvider extends PanelProvider
                 ->orderBy('order')
                 ->get();
 
-            $listGroups = [];
             $listItems = [];
 
             foreach ($menuItems as $menu) {
                 if ($menu->type === MenuType::Group) {
-                    $listGroups[] = NavigationGroup::make()
+                    $listItems[] = NavigationGroup::make()
                         ->label($menu->name)
                         ->items(static::getNavigationGroupItems($menu->children))
                         ->when($menu->icon, fn ($group) => $group->icon($menu->icon));
                 } else {
-                    $listGroups[] = NavigationGroup::make()
+                    $listItems[] = NavigationGroup::make()
                         ->items([
                             NavigationItem::make()
                             ->label($menu->name)
@@ -99,9 +98,7 @@ class AdminPanelProvider extends PanelProvider
             }
 
             return $builder
-                ->groups($listGroups)
-                // ->items($listItems)
-                ;
+                ->groups($listItems);
         };
     }
 

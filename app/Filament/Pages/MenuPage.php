@@ -2,8 +2,8 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Actions;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Saade\FilamentAdjacencyList\Forms as AdjacencyListForms;
 
 class MenuPage extends \Filament\Pages\Page
@@ -15,6 +15,8 @@ class MenuPage extends \Filament\Pages\Page
     protected static ?string $title = 'Menu';
 
     public bool $isUpdated = false;
+
+    public ?array $deletedMenus = [];
 
     public ?array $menuListData = [];
 
@@ -36,7 +38,7 @@ class MenuPage extends \Filament\Pages\Page
         foreach ($menus as $menu) {
             $listMenu[] = [
                 ...$menu->toArray(),
-                'label' => $menu->name.($menu->is_show ? "" : " <span class='text-gray-400 text-sm'>(Hidden)</span>"),
+                'hidden' => ! $menu->is_show,
                 'children' => static::buildMenuArray($menu->children) ?? [],
             ];
         }
@@ -44,26 +46,48 @@ class MenuPage extends \Filament\Pages\Page
         return $listMenu;
     }
 
-    // protected function getHeaderActions(): array
-    // {
-    //     return [
-    //         Actions\CreateAction::make()
-    //             ->label('New Menu')
-    //             ->modalHeading('Create Menu')
-    //             ->form(static::getMenuForm())
-    //             ->successNotificationTitle('Menu Created')
-    //             ->failureNotificationTitle('There was a problem creating the menu.')
-    //             ->using(function (array $data) {
-    //                 static::createMenu($data);
-    //             }),
-    //     ];
-    // }
-
-    public static function createMenu(array $data)
+    public function submit()
     {
-        $newMenu = \App\Models\Menu::create($data);
+        try {
+            $data = $this->menuListForm->getState();
 
-        return $newMenu;
+            $this->createMenus(array_values($data['menus']));
+
+            Notification::make()
+                ->title('Menu has been updated successfully.')
+                ->success()
+                ->send();
+        } catch (\Throwable $th) {
+            Notification::make()
+                ->title('Failed to update menu.')
+                ->danger()
+                ->body($th->getMessage())
+                ->send();
+        }
+    }
+
+    private function createMenus($menus, $parent = null)
+    {
+        foreach ($menus as $index => $menu) {
+            $menu['order'] = $index + 1;
+            $menu['parent_id'] = $parent;
+
+            unset($menu['created_at'], $menu['updated_at'], $menu['children'], $menu['hidden']);
+
+            if (isset($menu['id'])) {
+                $newMenu = \App\Models\Menu::updateOrCreate(['id' => $menu['id']], $menu);
+            } else {
+                $newMenu = \App\Models\Menu::create($menu);
+            }
+
+            if (isset($menu['children'])) {
+                $this->createMenus($menu['children'], $newMenu->id);
+            }
+
+            if (isset($this->deletedMenus)) {
+                \App\Models\Menu::destroy($this->deletedMenus);
+            }
+        }
     }
 
     public static function getMenuForm(): array
@@ -72,11 +96,33 @@ class MenuPage extends \Filament\Pages\Page
             Forms\Components\ToggleButtons::make('type')
                 ->columnSpan(2)
                 ->hiddenLabel()
-                ->options(function ($context) {
-                    return \App\Models\Enums\MenuType::toArray();
+                ->options(function (Forms\Components\ToggleButtons $component, $context) {
+                    $except = [];
+
+                    $formState = ! in_array($context, ['add', 'addChild']) ? $component->getContainer()->getRawState() : [];
+
+                    if (! empty($formState['children'])) {
+                        $except = [\App\Models\Enums\MenuType::Resources->value, \App\Models\Enums\MenuType::Custom->value];
+                    }
+                    
+                    if ($context == 'edit' && isset($formState['parent_id']) && $formState['parent_id'] != null) {
+                        $except = [\App\Models\Enums\MenuType::Group->value];
+                    }
+
+                    if ($context == 'addChild') {
+                        $except = [\App\Models\Enums\MenuType::Group->value];
+                    }
+
+                    return \App\Models\Enums\MenuType::toArray($except);
                 })
                 ->icons(\App\Models\Enums\MenuType::toIconArray())
-                ->default(\App\Models\Enums\MenuType::Group->value)
+                ->default(function ($context) {
+                    if ($context == 'addChild') {
+                        return \App\Models\Enums\MenuType::Resources->value;
+                    }
+
+                    return \App\Models\Enums\MenuType::Group->value;
+                })
                 ->live()
                 ->inline()
                 ->grouped(),
@@ -170,8 +216,8 @@ class MenuPage extends \Filament\Pages\Page
                     ->hiddenLabel()
                     ->maxDepth(1)
                     ->collapsible()
+                    ->labelKey('name')
                     ->moveable(false)
-                    ->orderColumn('order')
                     ->form([
                         ...static::getMenuForm(),
                     ])
@@ -198,7 +244,26 @@ class MenuPage extends \Filament\Pages\Page
                             });
                     })
                     ->deleteAction(function (AdjacencyListForms\Components\Actions\DeleteAction $action) {
-                        $action->requiresConfirmation();
+                        $action
+                            ->action(function (AdjacencyListForms\Components\Component $component, array $arguments) use ($action) {
+                                $record = $component->getRelatedModel() ? $component->getCachedExistingRecords()->get($arguments['cachedRecordKey']) : null;
+
+                                $action->process(function (AdjacencyListForms\Components\Component $component, array $arguments): void {
+                                    $statePath = $component->getRelativeStatePath($arguments['statePath']);
+                                    $items = $component->getState();
+
+                                    $itemState = data_get($items, $statePath);
+
+                                    if (isset($itemState['id'])) {
+                                        $this->deletedMenus[] = $itemState['id'];
+                                    }
+
+                                    data_forget($items, $statePath);
+
+                                    $component->state($items);
+                                }, ['record' => $record]);
+                            })
+                            ->requiresConfirmation();
                     })
                     ->afterStateUpdated(function ($state) {
                         $this->isUpdated = true;

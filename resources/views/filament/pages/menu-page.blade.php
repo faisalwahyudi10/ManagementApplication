@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    <x-filament-panels::form wire:submit="createMenu">
+    <x-filament-panels::form wire:submit="submit">
         <x-filament::section heading="List Menu" description="Ini merupakan list menu yang ada diaplikasi">
             {{-- @if($isUpdated)
                 <div>Hahahaha</div>

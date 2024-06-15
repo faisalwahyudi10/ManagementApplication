@@ -33,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->login()
-            ->topNavigation()
+            ->topNavigation(setting('top_navbar'))
             ->colors([
                 'primary' => Color::Amber,
             ])

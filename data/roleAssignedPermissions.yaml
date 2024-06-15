@@ -28,7 +28,7 @@ Admin:
     - 'Permission:delete'
     - 'Permission:update'
     - 'Permission:viewAny'
-    = 'Permission:view'
+    - 'Permission:view'
     - 'Role:create'
     - 'Role:delete'
     - 'Role:update'

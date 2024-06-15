@@ -55,7 +55,10 @@
                     wire:click="mountFormComponentAction(@js($statePath), 'edit', @js($mountArgs))"
                 @endif --}}
             >
-                <div>{!! $item[$labelKey] !!}</div>
+                <div>
+                    {{ $item[$labelKey] }} 
+                    {!! isset($item['hidden']) && $item['hidden'] == true ? "<span class='text-gray-400 text-sm'>(Hidden)</span>" : "" !!}
+                </div>
             </button>
         </div>
 
@@ -102,7 +105,7 @@
         })"
     >
         @foreach ($item[$childrenKey] ?? [] as $uuid => $child)
-            <x-filament-adjacency-list::item
+            <x-forms::adjacency-list-item
                 @class([
                     'fi-adjacency-list-branch' => !empty($child[$childrenKey]),
                     'fi-adjacency-list-leaf' => empty($child[$childrenKey]),

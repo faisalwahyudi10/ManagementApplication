@@ -9,16 +9,12 @@ use Saade\FilamentAdjacencyList\Forms as AdjacencyListForms;
 class MenuPage extends \Filament\Pages\Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
-
     protected static string $view = 'filament.pages.menu-page';
-
     protected static ?string $title = 'Menu';
-
     public bool $isUpdated = false;
-
     public ?array $deletedMenus = [];
-
     public ?array $menuListData = [];
+    public ?array $menuSettingData = [];
 
     public function mount()
     {
@@ -29,6 +25,8 @@ class MenuPage extends \Filament\Pages\Page
         ->orderBy('order')->get();
 
         $this->menuListData = ['menus' => static::buildMenuArray($menus)];
+
+        $this->menuSettingForm->fill(setting()->all());
     }
 
     private static function buildMenuArray($menus)
@@ -205,7 +203,33 @@ class MenuPage extends \Filament\Pages\Page
     {
         return [
             'menuListForm',
+            'menuSettingForm'
         ];
+    }
+
+    public function menuSettingForm(Forms\Form $form): Forms\Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\ToggleButtons::make('top_navbar')
+                    ->label('Posisi Navbar')
+                    ->options([
+                        true => 'Diatas',
+                        false => 'Disamping',
+                    ])
+                    ->icons([
+                        true => 'heroicon-o-arrow-up-circle',
+                        false => 'heroicon-o-arrow-left-circle',
+                    ])
+                    ->inline()
+                    ->live()
+                    ->afterStateUpdated(function (bool $state, $livewire) {
+                        setting(['top_navbar' => $state]);
+
+                        return redirect()->to(url(back()->getTargetUrl()));
+                    })
+            ])
+            ->statePath('menuSettingData');
     }
 
     public function menuListForm(Forms\Form $form): Forms\Form

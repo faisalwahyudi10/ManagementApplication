@@ -1,6 +1,9 @@
 <x-filament-panels::page>
+    <x-filament::section heading="Setting Menu" description="Pengaturan Umum Menu Pada Aplikasi">
+        {{ $this->menuSettingForm }}
+    </x-filament::section>
     <x-filament-panels::form wire:submit="submit">
-        <x-filament::section heading="List Menu" description="Ini merupakan list menu yang ada diaplikasi">
+        <x-filament::section heading="List Menu" description="Pengaturan List Menu Pada Aplikasi">
             {{-- @if($isUpdated)
                 <div>Hahahaha</div>
             @endif --}}

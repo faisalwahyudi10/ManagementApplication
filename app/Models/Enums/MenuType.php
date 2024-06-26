@@ -11,6 +11,7 @@ enum MenuType: string implements HasLabel
 
     case Group = 'Group';
     case Resources = 'Resources';
+    case Pages = 'Pages';
     case Custom = 'Custom';
 
     public function getLabel(): ?string
@@ -23,6 +24,7 @@ enum MenuType: string implements HasLabel
         $options = [
             self::Group->value => self::Group->getLabel(),
             self::Resources->value => self::Resources->getLabel(),
+            self::Pages->value => self::Pages->getLabel(),
             self::Custom->value => self::Custom->getLabel(),
         ];
 
@@ -36,6 +38,7 @@ enum MenuType: string implements HasLabel
         $icons = [
             self::Group->value => 'heroicon-s-queue-list',
             self::Resources->value => 'heroicon-o-globe-alt',
+            self::Pages->value => 'heroicon-o-document',
             self::Custom->value => 'heroicon-o-link',
         ];
 

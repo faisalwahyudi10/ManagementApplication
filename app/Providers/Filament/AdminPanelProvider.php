@@ -78,7 +78,6 @@ class AdminPanelProvider extends PanelProvider
     {
         return function (NavigationBuilder $builder): NavigationBuilder {
 
-            $user = Auth::user();
             $menuItems = Menu::query()
                 ->with(['children' => function ($query) {
                     $query->orderBy('order')
@@ -95,16 +94,12 @@ class AdminPanelProvider extends PanelProvider
                 if ($menu->type === MenuType::Group) {
                     $listItems[] = NavigationGroup::make()
                         ->label($menu->name)
-                        ->items(static::getNavigationGroupItems($menu->children))
+                        ->items(static::getNavigationChildItems($menu->children))
                         ->when($menu->icon, fn ($group) => $group->icon($menu->icon));
                 } else {
-                    $listItems[] = NavigationGroup::make()
-                        ->items([
-                            NavigationItem::make()
-                            ->label($menu->name)
-                            ->icon($menu->icon)
-                            ->url(route($menu->route))
-                        ]);
+                    $item = static::getNavigationItems($menu) ?? [];
+
+                    $listItems[] = NavigationGroup::make()->items($item);
                 }
             }
 
@@ -113,21 +108,31 @@ class AdminPanelProvider extends PanelProvider
         };
     }
 
-    protected static function getNavigationGroupItems($menu): array
+    protected static function getNavigationChildItems($menu): array
     {
         $listItem = [];
 
         foreach ($menu as $child) {
-            $instance = $child->instance;
-            if ($child->type == MenuType::Resources) {
+            $listItem = static::getNavigationItems($child, $listItem);
+        }
+
+        return $listItem;
+    }
+
+    protected static function getNavigationItems(Menu $menu, array $listItem = []) {
+        $instance = $menu->instance;
+
+        if ($menu->type == MenuType::Resources) {
+            if ($instance::canViewAny()) {
                 $listItem = array_merge($listItem, $instance::getNavigationItems());
-            } else {
-                $listItem[] = NavigationItem::make()
-                    ->label($child->name)
-                    ->icon($child->icon)
-                    ->sort($child->order)
-                    ->url(route($child->route));
             }
+        } else {
+            $listItem[] = NavigationItem::make()
+                ->label($menu->name)
+                ->icon($menu->icon)
+                ->sort($menu->order)
+                ->isActiveWhen(fn () => request()->routeIs($menu->route))
+                ->url(fn () => $menu->is_custom ? $menu->route : route($menu->route));
         }
 
         return $listItem;

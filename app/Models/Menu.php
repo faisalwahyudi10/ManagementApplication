@@ -20,6 +20,7 @@ class Menu extends Model
         'order',
         'is_show',
         'is_custom',
+        'instance'
     ];
 
     protected $casts = [

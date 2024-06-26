@@ -48,6 +48,10 @@ class AdminPanelProvider extends PanelProvider
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
             ])
+            ->plugins([
+                \Awcodes\LightSwitch\LightSwitchPlugin::make(),
+                \Njxqlus\FilamentProgressbar\FilamentProgressbarPlugin::make()->color('rgb('.Color::Amber[500].')'),
+            ])
             ->navigation(static::getNavigations())          
             ->middleware([
                 EncryptCookies::class,

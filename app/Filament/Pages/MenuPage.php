@@ -8,7 +8,7 @@ use Saade\FilamentAdjacencyList\Forms as AdjacencyListForms;
 
 class MenuPage extends \Filament\Pages\Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?string $navigationIcon = 'heroicon-o-queue-list';
     protected static string $view = 'filament.pages.menu-page';
     protected static ?string $title = 'Menu';
     public bool $isUpdated = false;
@@ -70,7 +70,9 @@ class MenuPage extends \Filament\Pages\Page
             $menu['order'] = $index + 1;
             $menu['parent_id'] = $parent;
 
-            unset($menu['created_at'], $menu['updated_at'], $menu['children'], $menu['hidden']);
+            $menu['is_custom'] = $menu['type'] == \App\Models\Enums\MenuType::Custom->value;
+
+            unset($menu['created_at'], $menu['updated_at'], $menu['hidden']);
 
             if (isset($menu['id'])) {
                 $newMenu = \App\Models\Menu::updateOrCreate(['id' => $menu['id']], $menu);
@@ -79,7 +81,7 @@ class MenuPage extends \Filament\Pages\Page
             }
 
             if (isset($menu['children'])) {
-                $this->createMenus($menu['children'], $newMenu->id);
+                $this->createMenus(array_values($menu['children']), $newMenu->id);
             }
 
             if (isset($this->deletedMenus)) {
@@ -100,7 +102,7 @@ class MenuPage extends \Filament\Pages\Page
                     $formState = ! in_array($context, ['add', 'addChild']) ? $component->getContainer()->getRawState() : [];
 
                     if (! empty($formState['children'])) {
-                        $except = [\App\Models\Enums\MenuType::Resources->value, \App\Models\Enums\MenuType::Custom->value];
+                        $except = [\App\Models\Enums\MenuType::Resources->value, \App\Models\Enums\MenuType::Pages->value, \App\Models\Enums\MenuType::Custom->value];
                     }
                     
                     if ($context == 'edit' && isset($formState['parent_id']) && $formState['parent_id'] != null) {
@@ -130,13 +132,18 @@ class MenuPage extends \Filament\Pages\Page
                 ->schema([
                     Forms\Components\Select::make('instance')
                         ->columnSpan(3)
-                        ->label('Resource/Page')
+                        ->label(fn (Forms\Get $get) => $get('type') == \App\Models\Enums\MenuType::Resources->value ? 'Resources' : 'Pages')
                         ->searchable()
-                        ->options(function () {
-                            $resources = \Filament\Facades\Filament::getResources();
-                            $pages = \Filament\Facades\Filament::getPages();
+                        ->options(function (Forms\Get $get) {
+                            $listMenu = [];
 
-                            $listMenu = array_merge($resources, $pages);
+                            if ($get('type') == \App\Models\Enums\MenuType::Resources->value) {
+                                $listMenu = \Filament\Facades\Filament::getResources();
+                            }
+
+                            if ($get('type') == \App\Models\Enums\MenuType::Pages->value) {
+                                $listMenu = \Filament\Facades\Filament::getPages();
+                            }
 
                             return array_reduce($listMenu, function($menus, $menu) {
                                 if ($menu::canAccess()) {
@@ -156,7 +163,7 @@ class MenuPage extends \Filament\Pages\Page
                             $set('route', method_exists($state, 'getRouteBaseName') ? $state::getRouteBaseName() : $state::getNavigationItemActiveRoutePattern());
                             $set('icon', $state::getNavigationIcon() ?? 'heroicon-o-rectangle-stack');
                         })
-                        ->visible(fn (Forms\Get $get) => $get('type') == \App\Models\Enums\MenuType::Resources->value)
+                        ->visible(fn (Forms\Get $get) => in_array($get('type'), [\App\Models\Enums\MenuType::Resources->value, \App\Models\Enums\MenuType::Pages->value]))
                         ->required(),
                     Forms\Components\Select::make('parent_id')
                         ->columnSpan(3)
@@ -180,7 +187,7 @@ class MenuPage extends \Filament\Pages\Page
                         ->visible(fn (Forms\Get $get) => $get('type') != \App\Models\Enums\MenuType::Group->value),
                     Forms\Components\TextInput::make('route')
                         ->columnSpan(3)
-                        ->label(fn (Forms\Get $get) => $get('is_custom') ? 'URL' : 'Route')
+                        ->label(fn (Forms\Get $get) => $get('type') == \App\Models\Enums\MenuType::Custom->value ? 'URL' : 'Route')
                         ->placeholder('Enter the route of the menu item')
                         ->visible(fn (Forms\Get $get) => $get('type') != \App\Models\Enums\MenuType::Group->value)
                         ->required(),

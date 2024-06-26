@@ -29,6 +29,11 @@ class MenuPage extends \Filament\Pages\Page
         $this->menuSettingForm->fill(setting()->all());
     }
 
+    public static function canAccess(): bool
+    {
+        return auth()->user()->can('Menu:viewAny');
+    }
+
     private static function buildMenuArray($menus)
     {
         $listMenu = [];

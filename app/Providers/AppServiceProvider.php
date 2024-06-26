@@ -3,11 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Policies\ActivityPolicy;
-use App\Policies\ExceptionPolicy;
-use BezhanSalleh\FilamentExceptions\Models\Exception;
-use Illuminate\Support\Facades\Gate;
-use Spatie\Activitylog\Models\Activity;
 
 class AppServiceProvider extends ServiceProvider
 {

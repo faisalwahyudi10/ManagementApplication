@@ -37,6 +37,7 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -46,6 +47,10 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
+            ])
+            ->plugins([
+                \Awcodes\LightSwitch\LightSwitchPlugin::make(),
+                \Njxqlus\FilamentProgressbar\FilamentProgressbarPlugin::make()->color('rgb('.Color::Amber[500].')'),
             ])
             ->navigation(static::getNavigations())          
             ->middleware([

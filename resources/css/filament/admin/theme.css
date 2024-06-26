@@ -1,0 +1,15 @@
+@import "/vendor/filament/filament/resources/css/theme.css";
+
+@config './tailwind.config.js';
+
+.fi-sidebar {
+    @apply lg:!bg-white lg:ring-1 lg:!shadow-xl dark:lg:!bg-gray-900;
+}
+
+.fi-sidebar-header {
+    @apply z-10 shadow-sm;
+}
+
+.debug {
+    @apply border border-red-600;
+}

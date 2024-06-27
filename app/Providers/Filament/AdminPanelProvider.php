@@ -3,27 +3,19 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\Dashboard;
-use App\Models\Enums\MenuType;
-use App\Models\Menu;
-use Filament\Http\Middleware\Authenticate;
-use Filament\Http\Middleware\DisableBladeIconComponents;
-use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\NavigationBuilder;
-use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
+use App\Models;
+use Filament\Http;
+use Filament\Navigation;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
+use Filament\Support;
 use Filament\Widgets;
-use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
-use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\Session\Middleware\AuthenticateSession;
-use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Cookie;
+use Illuminate\Foundation;
+use Illuminate\Routing;
+use Illuminate\Session;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\View;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -33,40 +25,18 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->login()
-            ->topNavigation(function_exists('setting') ? setting('top_navbar') : true)
-            ->colors([
-                'primary' => Color::Amber,
-            ])
+            ->topNavigation(static::getTopNavigation())
+            ->colors(static::getColors())
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            ->pages([
-                Dashboard::class,
-            ])
+            ->pages(static::getPages())
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
-            ])
-            ->plugins([
-                \Awcodes\LightSwitch\LightSwitchPlugin::make(),
-                \Njxqlus\FilamentProgressbar\FilamentProgressbarPlugin::make()->color('rgb('.Color::Amber[500].')'),
-            ])
+            ->widgets(static::getWidgets())
+            ->plugins(static::getPlugins())
             ->navigation(static::getNavigations())          
-            ->middleware([
-                EncryptCookies::class,
-                AddQueuedCookiesToResponse::class,
-                StartSession::class,
-                AuthenticateSession::class,
-                ShareErrorsFromSession::class,
-                VerifyCsrfToken::class,
-                SubstituteBindings::class,
-                DisableBladeIconComponents::class,
-                DispatchServingFilamentEvent::class,
-            ])
-            ->authMiddleware([
-                Authenticate::class,
-            ]);
+            ->middleware(static::getMiddleware())
+            ->authMiddleware(static::getAuthMiddleware());
     }
 
     public function boot(): void
@@ -74,11 +44,16 @@ class AdminPanelProvider extends PanelProvider
         Blade::anonymousComponentPath(resource_path('views/forms/components'), 'forms');
     }
 
+    protected static function getTopNavigation()
+    {
+        return function_exists('setting') ? setting('top_navbar') : true;
+    }
+
     protected static function getNavigations()
     {
-        return function (NavigationBuilder $builder): NavigationBuilder {
+        return function (Navigation\NavigationBuilder $builder): Navigation\NavigationBuilder {
 
-            $menuItems = Menu::query()
+            $menuItems = Models\Menu::query()
                 ->with(['children' => function ($query) {
                     $query->orderBy('order')
                         ->whereIsShow(true);
@@ -91,15 +66,15 @@ class AdminPanelProvider extends PanelProvider
             $listItems = [];
 
             foreach ($menuItems as $menu) {
-                if ($menu->type === MenuType::Group) {
-                    $listItems[] = NavigationGroup::make()
+                if ($menu->type === Models\Enums\MenuType::Group) {
+                    $listItems[] = Navigation\NavigationGroup::make()
                         ->label($menu->name)
                         ->items(static::getNavigationChildItems($menu->children))
                         ->when($menu->icon, fn ($group) => $group->icon($menu->icon));
                 } else {
                     $item = static::getNavigationItems($menu) ?? [];
 
-                    $listItems[] = NavigationGroup::make()->items($item);
+                    $listItems[] = Navigation\NavigationGroup::make()->items($item);
                 }
             }
 
@@ -119,15 +94,15 @@ class AdminPanelProvider extends PanelProvider
         return $listItem;
     }
 
-    protected static function getNavigationItems(Menu $menu, array $listItem = []) {
+    protected static function getNavigationItems(Models\Menu $menu, array $listItem = []) {
         $instance = $menu->instance;
 
-        if ($menu->type == MenuType::Resources) {
+        if ($menu->type == Models\Enums\MenuType::Resources) {
             if ($instance::canViewAny()) {
                 $listItem = array_merge($listItem, $instance::getNavigationItems());
             }
         } else {
-            $listItem[] = NavigationItem::make()
+            $listItem[] = Navigation\NavigationItem::make()
                 ->label($menu->name)
                 ->icon($menu->icon)
                 ->sort($menu->order)
@@ -136,5 +111,57 @@ class AdminPanelProvider extends PanelProvider
         }
 
         return $listItem;
+    }
+
+    public static function getColors()
+    {
+        return [
+            'primary' => Support\Colors\Color::Amber,
+        ];
+    }
+
+    public static function getPages()
+    {
+        return [
+            Dashboard::class,
+        ];
+    }
+
+    public static function getWidgets()
+    {
+        return [
+            Widgets\AccountWidget::class,
+            Widgets\FilamentInfoWidget::class,
+        ];
+    }
+
+    protected static function getPlugins()
+    {
+        return [
+            \Awcodes\LightSwitch\LightSwitchPlugin::make(),
+            \Njxqlus\FilamentProgressbar\FilamentProgressbarPlugin::make()->color('rgb('.Support\Colors\Color::Amber[500].')'),
+        ];
+    }
+
+    protected static function getMiddleware()
+    {
+        return [
+            Cookie\Middleware\EncryptCookies::class,
+            Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            Session\Middleware\StartSession::class,
+            Session\Middleware\AuthenticateSession::class,
+            View\Middleware\ShareErrorsFromSession::class,
+            Foundation\Http\Middleware\VerifyCsrfToken::class,
+            Routing\Middleware\SubstituteBindings::class,
+            Http\Middleware\DisableBladeIconComponents::class,
+            Http\Middleware\DispatchServingFilamentEvent::class,
+        ];
+    }
+
+    protected static function getAuthMiddleware()
+    {
+        return [
+            Http\Middleware\Authenticate::class,
+        ];
     }
 }

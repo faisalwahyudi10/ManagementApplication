@@ -2,7 +2,7 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Dashboard;
+use App\Filament\Pages;
 use App\Models;
 use Filament\Http;
 use Filament\Navigation;
@@ -25,6 +25,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->login()
+            ->userMenuItems(static::getUserMenuItems())
             ->topNavigation(static::getTopNavigation())
             ->colors(static::getColors())
             ->viteTheme('resources/css/filament/admin/theme.css')
@@ -47,6 +48,14 @@ class AdminPanelProvider extends PanelProvider
     protected static function getTopNavigation()
     {
         return function_exists('setting') ? setting('top_navbar') : true;
+    }
+
+    protected static function getUserMenuItems()
+    {
+        return [
+            'profile' => Navigation\MenuItem::make()->url(fn (): string => Pages\Account::getUrl(['user' => auth()->id()])),
+            'logout' => Navigation\MenuItem::make()->label('Keluar')
+        ];
     }
 
     protected static function getNavigations()
@@ -123,7 +132,7 @@ class AdminPanelProvider extends PanelProvider
     public static function getPages()
     {
         return [
-            Dashboard::class,
+            Pages\Dashboard::class,
         ];
     }
 

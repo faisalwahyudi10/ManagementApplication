@@ -7,6 +7,7 @@ use Filament\Actions;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Infolists;
+use Filament\Notifications;
 use Filament\Pages\Page;
 use Illuminate\Support;
 
@@ -18,7 +19,7 @@ class Account extends Page implements Forms\Contracts\HasForms, Actions\Contract
     protected static string $view = 'filament.pages.account';
     protected ?string $heading = ' ';
     public Models\User $user;
-    public ?array $avatar = [];
+    public array $avatar = [];
 
     public function getBreadcrumbs(): array
     {
@@ -31,9 +32,22 @@ class Account extends Page implements Forms\Contracts\HasForms, Actions\Contract
     public function updateAvatar(): void
     {
         try {
-            // dd($this->avatar);
+            $this->form->model($this->user)->saveRelationships();
+
+            $this->user->refresh();
+
+            $this->dispatch('close-modal', id: 'upload-avatar-modal');
+
+            Notifications\Notification::make()
+                ->title('Foto profil berhasil diperbarui')
+                ->success()
+                ->send();
         } catch (\Throwable $th) {
-            throw $th;
+            Notifications\Notification::make()
+                ->title('Gagal memperbarui foto profil')
+                ->body($th->getMessage())
+                ->danger()
+                ->send();
         }
     }
 
@@ -47,6 +61,7 @@ class Account extends Page implements Forms\Contracts\HasForms, Actions\Contract
         return Actions\Action::make('editProfileAction')
             ->label('Edit Profil')
             ->outlined()
+            ->visible(fn () => auth()->user()->is($this->user))
             ->icon('heroicon-s-pencil-square')
             ->extraAttributes(['class' => 'w-fit !text-xs'])
             ->size('sm')
@@ -80,6 +95,7 @@ class Account extends Page implements Forms\Contracts\HasForms, Actions\Contract
     {
         return Actions\Action::make('changePasswordAction')
             ->label('Ubah Password')
+            ->visible(fn () => auth()->user()->is($this->user))
             ->outlined()
             ->icon('heroicon-s-key')
             ->extraAttributes(['class' => 'w-fit !text-xs'])
@@ -124,24 +140,25 @@ class Account extends Page implements Forms\Contracts\HasForms, Actions\Contract
     {
         return $form
             ->schema([
-                Forms\Components\SpatieMediaLibraryFileUpload::make('avatar')
+                Forms\Components\SpatieMediaLibraryFileUpload::make('avatar.profile')
                     ->label('Upload Foto Profil')
+                    ->hiddenLabel()
                     ->collection('profile')
+                    ->model($this->user)
                     ->image()
+                    ->required()
                     ->maxSize(2048)
                     ->columnSpanFull()
                     ->preserveFilenames()
-                    ->model($this->user)
-                    ->saveRelationshipsUsing(function (Forms\Components\SpatieMediaLibraryFileUpload $component) {
-                        dd($component->getState());
-                    }),
-            ])
-            ->model($this->user);
+                    ->imageEditor(),
+            ]);
     }
 
     public function mount(Models\User $user): void
     {
         $this->user = $user;
+
+        $this->form->fill($this->user->attributesToArray());
     }
 
     public static function getRoutePath(): string

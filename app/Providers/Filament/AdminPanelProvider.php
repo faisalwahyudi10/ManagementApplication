@@ -115,6 +115,7 @@ class AdminPanelProvider extends PanelProvider
                 ->label($menu->name)
                 ->icon($menu->icon)
                 ->sort($menu->order)
+                ->visible(fn () => $menu->type == Models\Enums\MenuType::Pages ? $instance::canAccess() : true)
                 ->isActiveWhen(fn () => request()->routeIs($menu->route))
                 ->url(fn () => $menu->is_custom ? $menu->route : route($menu->route));
         }

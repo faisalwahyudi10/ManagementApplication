@@ -12,4 +12,9 @@ class ActivityResource extends Resources
     {
         return  Menu::whereInstance(static::class)->first()?->icon ?? __('filament-logger::filament-logger.nav.log.icon');
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return Menu::whereInstance(static::class)->first()?->name ?? __('filament-logger::filament-logger.nav.log.label');
+    }
 }

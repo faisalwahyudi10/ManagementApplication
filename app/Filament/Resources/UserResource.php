@@ -27,6 +27,11 @@ class UserResource extends Resource
         return Menu::whereInstance(static::class)->first()?->icon ?? 'heroicon-o-users';
     }
 
+    public static function getNavigationLabel(): string
+    {
+        return Menu::whereInstance(static::class)->first()?->name ?? static::getTitleCasePluralModelLabel();
+    }
+
     public static function form(Form $form): Form
     {
         return $form

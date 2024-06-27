@@ -23,6 +23,11 @@ class RoleResource extends Resource
         return Menu::whereInstance(static::class)->first()?->icon ?? 'heroicon-o-shield-check';
     }
 
+    public static function getNavigationLabel(): string
+    {
+        return Menu::whereInstance(static::class)->first()?->name ?? static::getTitleCasePluralModelLabel();
+    }
+
     protected static ?string $navigationGroup = 'Management Users';
 
     public static function form(Forms\Form $form): Forms\Form

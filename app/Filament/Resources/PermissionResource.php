@@ -22,6 +22,11 @@ class PermissionResource extends Resource
         return Menu::whereInstance(static::class)->first()?->icon ?? 'heroicon-o-lock-closed';
     }
 
+    public static function getNavigationLabel(): string
+    {
+        return Menu::whereInstance(static::class)->first()?->name ?? static::getTitleCasePluralModelLabel();
+    }
+
     protected static ?string $navigationGroup = 'Management Users';
 
     public static function form(Form $form): Form

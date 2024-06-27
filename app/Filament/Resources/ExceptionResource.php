@@ -10,4 +10,9 @@ class ExceptionResource extends \BezhanSalleh\FilamentExceptions\Resources\Excep
     {
         return Menu::whereInstance(static::class)->first()?->icon ?? config('filament-exceptions.icons.navigation');
     }
+
+    public static function getNavigationLabel(): string
+    {
+        return Menu::whereInstance(static::class)->first()?->name ?? __('filament-exceptions::filament-exceptions.labels.navigation');
+    }
 }

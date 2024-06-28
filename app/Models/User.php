@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Notifications\Notification;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -56,6 +57,21 @@ class User extends Authenticatable implements FilamentUser, HasMedia
 
     public function canAccessPanel(Panel $panel): bool
     {
+        if (!auth()->user()->is_active) {
+            
+            auth()->logout();
+
+            redirect()->to($panel->getLoginUrl());
+
+            Notification::make()
+                ->title('Akun Anda Dinonaktifkan')
+                ->body('Silahkan hubungi admin untuk mengaktifkan kembali akun Anda.')
+                ->danger()
+                ->send();
+
+            return false;
+        }
+
         return true;
     }
 
@@ -84,5 +100,19 @@ class User extends Authenticatable implements FilamentUser, HasMedia
             ->join(' ');
 
         return 'https://ui-avatars.com/api/?name=' . urlencode($name) . '&color=FFFFFF&background=111827&font-size=0.33';
+    }
+
+    public function canImpersonate()
+    {
+        return $this->can('User:loginAs');
+    }
+
+    public function canBeImpersonated()
+    {
+        if (!$this->is_active) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -179,6 +179,7 @@ class UserResource extends Resource
                     Impersonate::make()
                         ->grouped()
                         ->label(fn (User $record) => "Login sebagai {$record->name}")
+                        ->visible(fn () => auth()->user()->canImpersonate())
                         ->icon('heroicon-m-eye')
                         ->color('primary')
                 ])

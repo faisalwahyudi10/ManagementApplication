@@ -14,7 +14,7 @@ use Illuminate\Cookie;
 use Illuminate\Foundation;
 use Illuminate\Routing;
 use Illuminate\Session;
-use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades;
 use Illuminate\View;
 
 class AdminPanelProvider extends PanelProvider
@@ -42,12 +42,23 @@ class AdminPanelProvider extends PanelProvider
 
     public function boot(): void
     {
-        Blade::anonymousComponentPath(resource_path('views/forms/components'), 'forms');
+        Facades\Blade::anonymousComponentPath(resource_path('views/forms/components'), 'forms');
     }
 
     protected static function getTopNavigation()
     {
-        return function_exists('setting') ? setting('top_navbar') : true;
+        $databaseName = Facades\DB::connection()->getDatabaseName();
+
+        try {
+            Facades\DB::select("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '$databaseName'");
+            $databaseExists = true;
+        } catch (\Exception $e) {
+            $databaseExists = false;
+        }
+
+        return $databaseExists && Facades\Schema::hasTable('settings') && function_exists('setting')
+            ? setting('top_navbar')
+            : true;
     }
 
     protected static function getUserMenuItems()

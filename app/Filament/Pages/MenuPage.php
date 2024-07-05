@@ -56,6 +56,8 @@ class MenuPage extends \Filament\Pages\Page
 
             $this->createMenus(array_values($data['menus']));
 
+            $this->mount();
+
             Notification::make()
                 ->title('Menu has been updated successfully.')
                 ->success()

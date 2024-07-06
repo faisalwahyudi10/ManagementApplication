@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Models\Enums\MenuType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Kra8\Snowflake\HasSnowflakePrimary;
 
 class Menu extends Model
 {
-    use HasFactory;
+    use HasFactory, HasSnowflakePrimary;
 
     protected $fillable = [
         'parent_id',

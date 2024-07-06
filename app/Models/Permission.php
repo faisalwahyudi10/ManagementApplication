@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasVirtualColumns;
+use Kra8\Snowflake\HasSnowflakePrimary;
 use Spatie\Permission\Models\Permission as Model;
 
 class Permission extends Model
 {
-    use HasVirtualColumns;
+    use HasVirtualColumns, HasSnowflakePrimary;
 
     /**
      * The virtual generated columns on the model
